@@ -15461,6 +15461,27 @@ img {
   .container-sm {
     min-width: 95%;
   }
+  .arrow {
+    width: 20px;
+    height: 20px;
+  }
+  
+  .arrow--left {
+    left: -12px;
+  }
+  
+  .arrow--right {
+    right: -12px;
+  }
+  
+  .navigation-wrapper {
+    padding: 0 25px;
+  }
+  
+  .arrow svg {
+    width: 12px;
+    height: 12px;
+  }
 }
 
 /* -------------------------------------------------- 
@@ -15470,6 +15491,27 @@ img {
 @media (min-width: 768px) and (max-width: 979px) {
   .slider_text {
     padding-top: 0px;
+  }
+  .arrow {
+    width: 18px;
+    height: 18px;
+  }
+  
+  .arrow--left {
+    left: -8px;
+  }
+  
+  .arrow--right {
+    right: -8px;
+  }
+  
+  .navigation-wrapper {
+    padding: 0 20px;
+  }
+  
+  .arrow svg {
+    width: 10px;
+    height: 10px;
   }
 }
 
@@ -16271,9 +16313,34 @@ img {
 }
 
 /* -------------------------------------------------- 
-    custom for 320px & 480px 
+    custom for 577px-768px
     /* -------------------------------------------------- */
 
+.arrow {
+    width: 16px;
+    height: 16px;
+  }
+  
+  .arrow--left {
+    left: -5px;
+  }
+  
+  .arrow--right {
+    right: -5px;
+  }
+  
+  .navigation-wrapper {
+    padding: 0 15px;
+  }
+  
+  .arrow svg {
+    width: 12px;
+    height: 12px;
+  }
+
+/* -------------------------------------------------- 
+    custom for 320px & 480px 
+    /* -------------------------------------------------- */
 @media (max-width: 480px) {
   .navigation-wrapper {
     padding: 0 10px;
