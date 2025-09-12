@@ -6,6 +6,7 @@ import "keen-slider/keen-slider.min.css";
 import AuthorImage from "../../images/author_thumbnail.jpg";
 import nftImage from "../../images/nftImage.jpg";
 
+
 const NewItems = () => {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -67,24 +68,34 @@ const NewItems = () => {
   );
 
   useEffect(() => {
+    let isMounted = true;
+    
     const fetchNewItems = async () => {
       try {
         const response = await axios.get(
           'https://us-central1-nft-cloud-functions.cloudfunctions.net/newItems'
         );
-        if (Array.isArray(response.data)) {
+        if (isMounted && Array.isArray(response.data)) {
           setItems(response.data);
         }
       } catch (error) {
-        console.error('Error fetching new items:', error);
-        setItems([]);
+        if (isMounted) {
+          setItems([]);
+        }
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
 
     fetchNewItems();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
+
 
   const CountdownTimer = ({ expiryDate }) => {
     const [timeLeft, setTimeLeft] = useState('');
@@ -167,7 +178,7 @@ const NewItems = () => {
     );
   }
 
-  const itemsToShow = items.length > 0 ? items : new Array(8).fill({});
+  const itemsToShow = items;
 
   return (
     <section id="section-items" className="no-bottom">
