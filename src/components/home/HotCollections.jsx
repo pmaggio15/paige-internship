@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import axios from "axios";
 import { useKeenSlider } from "keen-slider/react";
@@ -9,79 +9,85 @@ import nftImage from "../../images/nftImage.jpg";
 const HotCollections = () => {
   const [collections, setCollections] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [currentSlide, setCurrentSlide] = useState(0);
   const [loaded, setLoaded] = useState(false);
 
-  const [sliderRef, instanceRef] = useKeenSlider(
-    {
-      initial: 0,
-      slides: {
-        perView: 4,
-        spacing: 30,
-      },
-      loop: true,
-      mode: "free-snap",
-      duration: 800,
-      easing: "ease-out",
-      slideChanged(slider) {
-        setCurrentSlide(slider.track.details.rel);
-      },
-      created() {
-        setLoaded(true);
-      },
-      breakpoints: {
-        "(max-width: 576px)": {
-          slides: {
-            perView: 1,
-            spacing: 10,
-          },
-          duration: 600,
-          mode: "snap",
+  const [sliderRef, instanceRef] = useKeenSlider({
+    initial: 0,
+    slides: {
+      perView: 4,
+      spacing: 30,
+    },
+    loop: true,
+    mode: "free-snap",
+    duration: 800,
+    easing: "ease-out",
+    created() {
+      setLoaded(true);
+    },
+    breakpoints: {
+      "(max-width: 576px)": {
+        slides: {
+          perView: 1,
+          spacing: 10,
         },
-        "(min-width: 577px) and (max-width: 768px)": {
-          slides: {
-            perView: 2,
-            spacing: 15,
-          },
-          duration: 700,
-          mode: "snap",
-        },
-        "(min-width: 769px) and (max-width: 1024px)": {
-          slides: {
-            perView: 3,
-            spacing: 20,
-          },
-          duration: 750,
-          mode: "free-snap",
-        },
-        "(min-width: 1025px)": {
-          slides: {
-            perView: 4,
-            spacing: 30,
-          },
-          duration: 800,
-          mode: "free-snap",
-        },
+        duration: 600,
+        mode: "snap",
       },
-    }
-  );
+      "(min-width: 577px) and (max-width: 768px)": {
+        slides: {
+          perView: 2,
+          spacing: 15,
+        },
+        duration: 700,
+        mode: "snap",
+      },
+      "(min-width: 769px) and (max-width: 1024px)": {
+        slides: {
+          perView: 3,
+          spacing: 20,
+        },
+        duration: 750,
+        mode: "free-snap",
+      },
+      "(min-width: 1025px)": {
+        slides: {
+          perView: 4,
+          spacing: 30,
+        },
+        duration: 800,
+        mode: "free-snap",
+      },
+    },
+  });
 
   useEffect(() => {
-    axios.get('https://us-central1-nft-cloud-functions.cloudfunctions.net/hotCollections')
-      .then(response => {
-        if (Array.isArray(response.data)) {
+    let isMounted = true;
+    
+    const fetchCollections = async () => {
+      try {
+        const response = await axios.get(
+          'https://us-central1-nft-cloud-functions.cloudfunctions.net/hotCollections'
+        );
+        
+        if (isMounted && Array.isArray(response.data)) {
           setCollections(response.data);
         }
-      })
-      .catch(error => {
-        setCollections([]);
-      })
-      .finally(() => {
-        // Add a 3-second delay to see the skeleton
-        setTimeout(() => {
+      } catch (error) {
+        if (isMounted) {
+          setCollections([]);
+        }
+      } finally {
+        if (isMounted) {
           setLoading(false);
-        }, 3000);
-      });
+        }
+      }
+    };
+
+    fetchCollections();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const itemsToShow = collections.length > 0 ? collections : new Array(8).fill({});
@@ -117,7 +123,6 @@ const HotCollections = () => {
                     </div>
                   ))}
                 </div>
-                {/* Skeleton arrows */}
                 <div className="arrow arrow--left skeleton-arrow">
                   <div className="skeleton skeleton-arrow-icon"></div>
                 </div>
@@ -146,14 +151,14 @@ const HotCollections = () => {
             <div className="navigation-wrapper">
               <div ref={sliderRef} className="keen-slider">
                 {itemsToShow.map((collection, index) => (
-                  <div key={index} className="keen-slider__slide">
+                  <div key={collection.id || index} className="keen-slider__slide">
                     <div className="nft_coll">
                       <div className="nft_wrap">
-                        <Link to="/item-details">
+                        <Link to={`/item-details/${collection.id || '1'}`}>
                           <img 
                             src={collection.nftImage || nftImage} 
                             className="lazy img-fluid" 
-                            alt=""
+                            alt={collection.title || 'NFT Collection'}
                             onError={(e) => {
                               e.target.src = nftImage;
                             }}
@@ -161,11 +166,11 @@ const HotCollections = () => {
                         </Link>
                       </div>
                       <div className="nft_coll_pp">
-                        <Link to="/author">
+                        <Link to={`/author/${collection.authorId || '1'}`}>
                           <img 
                             className="lazy pp-coll" 
                             src={collection.authorImage || AuthorImage} 
-                            alt=""
+                            alt={collection.author || 'Author'}
                             onError={(e) => {
                               e.target.src = AuthorImage;
                             }}
@@ -174,7 +179,7 @@ const HotCollections = () => {
                         <i className="fa fa-check"></i>
                       </div>
                       <div className="nft_coll_info">
-                        <Link to="/explore">
+                        <Link to={`/item-details/${collection.id || '1'}`}>
                           <h4>{collection.title || "Pinky Ocean"}</h4>
                         </Link>
                         <span>{collection.code || "ERC-192"}</span>
@@ -191,6 +196,7 @@ const HotCollections = () => {
                       e.stopPropagation();
                       instanceRef.current?.prev();
                     }}
+                    aria-label="Previous collection"
                   >
                     <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
                       <path d="M7.5 9C7.5 9 4.5 6.41421 4.5 6C4.5 5.58579 7.5 3 7.5 3" stroke="black" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -202,6 +208,7 @@ const HotCollections = () => {
                       e.stopPropagation();
                       instanceRef.current?.next();
                     }}
+                    aria-label="Next collection"
                   >
                     <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
                       <path d="M4.5 3C4.5 3 7.5 5.58579 7.5 6C7.5 6.41421 4.5 9 4.5 9" stroke="black" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
