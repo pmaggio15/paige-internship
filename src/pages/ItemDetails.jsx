@@ -132,6 +132,7 @@ const ItemDetails = () => {
               </div>
               <div className="col-md-6">
                 <div className="item_info">
+                  <h2>{item.title || "Rainbow Style #194"}</h2>
                   <div className="item_info_counts">
                     <div className="item_info_views">
                       <i className="fa fa-eye"></i>
@@ -142,8 +143,6 @@ const ItemDetails = () => {
                       {item.likes || 99}
                     </div>
                   </div>
-
-                  <h2>{item.title || "Rainbow Style #194"}</h2>
 
                   <p>
                     {item.description || 

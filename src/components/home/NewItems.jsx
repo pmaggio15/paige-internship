@@ -96,7 +96,6 @@ const NewItems = () => {
     };
   }, []);
 
-
   const CountdownTimer = ({ expiryDate }) => {
     const [timeLeft, setTimeLeft] = useState('');
 
@@ -214,7 +213,7 @@ const NewItems = () => {
                           <i className="fa fa-check"></i>
                         </Link>
                       </div>
-
+                      
                       {item.expiryDate && (
                         <CountdownTimer expiryDate={item.expiryDate} />
                       )}
