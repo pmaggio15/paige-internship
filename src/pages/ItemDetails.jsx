@@ -4,6 +4,7 @@ import axios from "axios";
 import EthImage from "../images/ethereum.svg";
 import AuthorImage from "../images/author_thumbnail.jpg";
 import nftImage from "../images/nftImage.jpg";
+import ItemDetailsSkeleton from "../components/UI/ItemDetailsSkeleton";
 
 const ItemDetails = () => {
   const { id } = useParams();
@@ -19,22 +20,52 @@ const ItemDetails = () => {
     const fetchItemDetails = async () => {
       try {
         setLoading(true);
-        const response = await axios.get(
-          'https://us-central1-nft-cloud-functions.cloudfunctions.net/newItems'
-        );
+        setError(null);
         
-        if (Array.isArray(response.data)) {
-          const foundItem = response.data.find(item => item.id === parseInt(id));
+        let response;
+        try {
+          response = await axios.get(
+            `https://us-central1-nft-cloud-functions.cloudfunctions.net/itemDetails?nftId=${id}`
+          );
+        } catch (error) {
+          response = await axios.get(
+            `https://us-central1-nft-cloud-functions.cloudfunctions.net/itemDetails?id=${id}`
+          );
+        }
+        
+        console.log("ItemDetails API response:", response.data);
+        
+        if (response.data) {
+          setItem(response.data);
+        } else {
+          throw new Error('No data returned from itemDetails API');
+        }
+      } catch (error) {
+        console.error('Error fetching item details:', error);
+        
+        try {
+          const fallbackResponse = await axios.get(
+            'https://us-central1-nft-cloud-functions.cloudfunctions.net/newItems'
+          );
           
-          if (foundItem) {
-            setItem(foundItem);
-            setError(null);
+          if (Array.isArray(fallbackResponse.data)) {
+            const foundItem = fallbackResponse.data.find(item => 
+              item.id === parseInt(id) || item.nftId === parseInt(id)
+            );
+            
+            if (foundItem) {
+              setItem(foundItem);
+              setError(null);
+            } else {
+              setError('Item not found');
+            }
           } else {
             setError('Item not found');
           }
+        } catch (fallbackError) {
+          console.error('Fallback failed:', fallbackError);
+          setError('Failed to load item details');
         }
-      } catch (error) {
-        setError('Failed to load item details');
       } finally {
         setLoading(false);
       }
@@ -45,31 +76,42 @@ const ItemDetails = () => {
     }
   }, [id]);
 
+  const CountdownTimer = ({ expiryDate }) => {
+    const [timeLeft, setTimeLeft] = useState('');
+
+    useEffect(() => {
+      const calculateTimeLeft = () => {
+        const now = new Date().getTime();
+        const expiry = new Date(expiryDate).getTime();
+        const difference = expiry - now;
+
+        if (difference > 0) {
+          const days = Math.floor(difference / (1000 * 60 * 60 * 24));
+          const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+          const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+          const seconds = Math.floor((difference % (1000 * 60)) / 1000);
+
+          if (days > 0) {
+            setTimeLeft(`${days}d ${hours}h ${minutes}m`);
+          } else {
+            setTimeLeft(`${hours}h ${minutes}m ${seconds}s`);
+          }
+        } else {
+          setTimeLeft('Expired');
+        }
+      };
+
+      calculateTimeLeft();
+      const timer = setInterval(calculateTimeLeft, 1000);
+
+      return () => clearInterval(timer);
+    }, [expiryDate]);
+
+    return timeLeft;
+  };
+
   if (loading) {
-    return (
-      <div id="wrapper">
-        <div className="no-bottom no-top" id="content">
-          <div id="top"></div>
-          <section aria-label="section" className="mt90 sm-mt-0">
-            <div className="container">
-              <div className="row">
-                <div className="col-md-6 text-center">
-                  <div className="skeleton skeleton-image-large"></div>
-                </div>
-                <div className="col-md-6">
-                  <div className="item_info">
-                    <div className="skeleton skeleton-title-large"></div>
-                    <div className="skeleton skeleton-text"></div>
-                    <div className="skeleton skeleton-text"></div>
-                    <div className="skeleton skeleton-text"></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
-        </div>
-      </div>
-    );
+    return <ItemDetailsSkeleton />;
   }
 
   if (error) {
@@ -132,7 +174,14 @@ const ItemDetails = () => {
               </div>
               <div className="col-md-6">
                 <div className="item_info">
+                  {item.expiryDate && (
+                    <div className="de_countdown" style={{ marginBottom: '20px' }}>
+                      <CountdownTimer expiryDate={item.expiryDate} />
+                    </div>
+                  )}
+
                   <h2>{item.title || "Rainbow Style #194"}</h2>
+                  
                   <div className="item_info_counts">
                     <div className="item_info_views">
                       <i className="fa fa-eye"></i>
@@ -166,7 +215,7 @@ const ItemDetails = () => {
                       </div>
                       <div className="author_list_info">
                         <Link to={`/author/${item.ownerId || item.authorId || '1'}`}>
-                          {item.owner || item.author || "Nicholas Daniels"}
+                          {item.ownerName || item.authorName || item.owner || item.author || "Nicholas Daniels"}
                         </Link>
                       </div>
                     </div>
@@ -189,7 +238,7 @@ const ItemDetails = () => {
                       </div>
                       <div className="author_list_info">
                         <Link to={`/author/${item.creatorId || item.authorId || '1'}`}>
-                          {item.creator || item.author || "Franklin Greer"}
+                          {item.creatorName || item.authorName || item.creator || item.author || "Franklin Greer"}
                         </Link>
                       </div>
                     </div>

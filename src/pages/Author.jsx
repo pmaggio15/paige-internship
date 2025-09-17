@@ -11,6 +11,10 @@ const Author = () => {
   const [author, setAuthor] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  
+  
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [followerCount, setFollowerCount] = useState(0);
 
   const generateFollowerCount = (authorId) => {
     const seed = parseInt(authorId) || 1;
@@ -34,6 +38,36 @@ const Author = () => {
     }).catch(() => {
       alert('Failed to copy wallet address');
     });
+  };
+
+  
+  useEffect(() => {
+    const followedAuthors = JSON.parse(localStorage.getItem('followedAuthors') || '[]');
+    const isAlreadyFollowing = followedAuthors.includes(id);
+    setIsFollowing(isAlreadyFollowing);
+    
+  
+    const baseCount = generateFollowerCount(parseInt(id));
+    setFollowerCount(baseCount);
+  }, [id]);
+
+
+  const handleFollowToggle = () => {
+    const followedAuthors = JSON.parse(localStorage.getItem('followedAuthors') || '[]');
+    
+    if (isFollowing) {
+     
+      const updatedAuthors = followedAuthors.filter(authorId => authorId !== id);
+      localStorage.setItem('followedAuthors', JSON.stringify(updatedAuthors));
+      setIsFollowing(false);
+      setFollowerCount(prev => prev - 1);
+    } else {
+  
+      const updatedAuthors = [...followedAuthors, id];
+      localStorage.setItem('followedAuthors', JSON.stringify(updatedAuthors));
+      setIsFollowing(true);
+      setFollowerCount(prev => prev + 1);
+    }
   };
 
   useEffect(() => {
@@ -96,6 +130,13 @@ const Author = () => {
                 <div className="col-md-12 text-center">
                   <h2>Error</h2>
                   <p>Author with ID {id} not found</p>
+                  <button 
+                    onClick={() => window.location.reload()} 
+                    className="btn-main"
+                    style={{ marginRight: '10px' }}
+                  >
+                    Retry
+                  </button>
                   <Link to="/" className="btn-main">Go Home</Link>
                 </div>
               </div>
@@ -108,7 +149,6 @@ const Author = () => {
   
   const authorName = author?.authorName || "Unknown Author";
   const authorUsername = authorName.toLowerCase().replace(/\s+/g, '');
-  const followerCount = generateFollowerCount(parseInt(id));
   const walletAddress = generateWalletAddress(parseInt(id));
 
   return (
@@ -157,10 +197,15 @@ const Author = () => {
                   </div>
                   <div className="profile_follow de-flex">
                     <div className="de-flex-col">
-                      <div className="profile_follower">{followerCount} followers</div>
-                      <Link to="#" className="btn-main">
-                        Follow
-                      </Link>
+                      <div className="profile_follower">
+                        {followerCount} followers
+                      </div>
+                      <button 
+                        className={`btn-main ${isFollowing ? 'btn-following' : ''}`}
+                        onClick={handleFollowToggle}
+                      >
+                        {isFollowing ? 'Unfollow' : 'Follow'}
+                      </button>
                     </div>
                   </div>
                 </div>
