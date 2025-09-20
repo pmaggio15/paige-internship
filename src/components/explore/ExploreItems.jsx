@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import AuthorImage from "../../images/author_thumbnail.jpg";
 import nftImage from "../../images/nftImage.jpg";
 import ExploreSkeleton from "../UI/ExploreSkeleton";
+import AOS from 'aos';
 
 const ExploreItems = () => {
   const [nfts, setNfts] = useState([]);
@@ -11,12 +12,10 @@ const ExploreItems = () => {
   const [visibleCount, setVisibleCount] = useState(8);
   const [sortOption, setSortOption] = useState("");
 
-  
   useEffect(() => {
     const fetchNfts = async () => {
       try {
         setLoading(true);
-        
         
         let apiUrl = "https://us-central1-nft-cloud-functions.cloudfunctions.net/explore";
         if (sortOption) {
@@ -49,7 +48,12 @@ const ExploreItems = () => {
     fetchNfts();
   }, [sortOption]); 
 
-  
+  useEffect(() => {
+    if (!loading && nfts.length > 0) {
+      AOS.refresh();
+    }
+  }, [loading, nfts, visibleCount]);
+
   const CountdownTimer = ({ expiryDate }) => {
     const [timeLeft, setTimeLeft] = useState('');
 
@@ -84,7 +88,6 @@ const ExploreItems = () => {
     return <div className="de_countdown">{timeLeft}</div>;
   };
 
- 
   const sortedNfts = [...nfts]; 
 
   const handleLoadMore = () => {
@@ -95,7 +98,6 @@ const ExploreItems = () => {
     setSortOption(e.target.value);
   };
 
-
   if (loading) {
     return <ExploreSkeleton itemCount={8} />;
   }
@@ -103,12 +105,12 @@ const ExploreItems = () => {
   if (error) {
     return (
       <>
-        <div>
+        <div data-aos="fade-in">
           <select id="filter-items" defaultValue="" disabled>
             <option value="">Error loading data</option>
           </select>
         </div>
-        <div className="col-md-12 text-center" style={{ padding: "50px" }}>
+        <div className="col-md-12 text-center" style={{ padding: "50px" }} data-aos="fade-up">
           <h4>Error loading NFTs: {error}</h4>
           <button 
             onClick={() => window.location.reload()} 
@@ -124,7 +126,7 @@ const ExploreItems = () => {
 
   return (
     <>
-      <div>
+      <div data-aos="fade-in">
         <select 
           id="filter-items" 
           value={sortOption}
@@ -137,11 +139,13 @@ const ExploreItems = () => {
         </select>
       </div>
       
-      {sortedNfts.slice(0, visibleCount).map((nft) => (
+      {sortedNfts.slice(0, visibleCount).map((nft, index) => (
         <div
           key={nft.id}
           className="d-item col-lg-3 col-md-6 col-sm-6 col-xs-12"
           style={{ display: "block", backgroundSize: "cover" }}
+          data-aos="fade-up"
+          data-aos-delay={index * 50}
         >
           <div className="nft__item">
             <div className="author_list_pp">
@@ -221,7 +225,7 @@ const ExploreItems = () => {
       ))}
       
       {visibleCount < sortedNfts.length && (
-        <div className="col-md-12 text-center">
+        <div className="col-md-12 text-center" data-aos="fade-up" data-aos-delay="200">
           <Link 
             to="#" 
             id="loadmore" 
@@ -235,8 +239,6 @@ const ExploreItems = () => {
           </Link>
         </div>
       )}
-      
-
     </>
   );
 };
